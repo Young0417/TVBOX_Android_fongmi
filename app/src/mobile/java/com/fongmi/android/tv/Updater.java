@@ -13,7 +13,6 @@ import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.Github;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ResUtil;
-import com.github.catvod.net.OkHttp;
 import com.github.catvod.utils.Path;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -25,15 +24,12 @@ import java.util.Locale;
 public class Updater implements Download.Callback {
 
     private DialogUpdateBinding binding;
-    private final Download download;
+    private Download download;
     private AlertDialog dialog;
+    private boolean manual;
 
     private File getFile() {
         return Path.cache("update.apk");
-    }
-
-    private String getJson() {
-        return Github.getJson(BuildConfig.FLAVOR_mode);
     }
 
     private String getApk() {
@@ -49,6 +45,7 @@ public class Updater implements Download.Callback {
     }
 
     public Updater force() {
+        manual = true;
         Notify.show(R.string.update_check);
         Setting.putUpdate(true);
         return this;
@@ -66,17 +63,23 @@ public class Updater implements Download.Callback {
 
     private void doInBackground(Activity activity) {
         try {
-            JSONObject object = new JSONObject(OkHttp.string(getJson()));
+            JSONObject object = new JSONObject(Github.getJson(BuildConfig.FLAVOR_mode));
             String name = object.optString("name");
             String desc = object.optString("desc");
             int code = object.optInt("code");
-            if (code > BuildConfig.VERSION_CODE) App.post(() -> show(activity, name, desc));
+            if (code > BuildConfig.VERSION_CODE) {
+                App.post(() -> show(activity, name, desc));
+            } else if (manual) {
+                App.post(() -> Notify.show(R.string.update_latest));
+            }
         } catch (Exception e) {
             e.printStackTrace();
+            if (manual) App.post(() -> Notify.show(R.string.update_error));
         }
     }
 
     private void show(Activity activity, String version, String desc) {
+        download = Download.create(getApk(), getFile());
         binding = DialogUpdateBinding.inflate(LayoutInflater.from(activity));
         check().create(activity, ResUtil.getString(R.string.update_version, version)).show();
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(this::confirm);
