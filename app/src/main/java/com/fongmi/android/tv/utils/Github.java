@@ -2,7 +2,7 @@ package com.fongmi.android.tv.utils;
 
 public class Github {
 
-    public static final String URL = "https://raw.githubusercontent.com/Young0417/TVBOX_Android_fongmi/main";
+    public static final String URL = "https://gitee.com/yang-dengfeng007/tvbox_-android_fongmi/raw/main";
 
     private static String getUrl(String name) {
         return URL + "/apk/" + name;

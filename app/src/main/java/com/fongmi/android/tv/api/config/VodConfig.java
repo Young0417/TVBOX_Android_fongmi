@@ -105,6 +105,7 @@ public class VodConfig {
     }
 
     public void load(Callback callback) {
+        ConfigManager.get().clearCache();
         int id = taskId.incrementAndGet();
         if (future != null && !future.isDone()) future.cancel(true);
         future = App.submit(() -> loadConfig(id, config, callback));
