@@ -6,24 +6,29 @@ import com.github.catvod.net.OkHttp;
 
 public class Github {
 
-    public static final String GITEE = "https://gitee.com/yang-dengfeng007/tvbox_-android_fongmi/raw/main";
     public static final String GITHUB = "https://raw.githubusercontent.com/Young0417/TVBOX_Android_fongmi/main";
 
-    private static final String[] BASE_URLS = {GITEE, GITHUB};
+    private static final Source[] SOURCES = {
+            new Source(
+                    "https://ghfast.top/https://raw.githubusercontent.com/Young0417/TVBOX_Android_fongmi/main",
+                    "https://ghfast.top/https://github.com/Young0417/TVBOX_Android_fongmi/raw/main"
+            ),
+            new Source(GITHUB, GITHUB)
+    };
 
-    private static volatile String base = GITHUB;
+    private static volatile Source source = SOURCES[1];
 
     public static String getBase() {
-        return base;
+        return source.apkBase;
     }
 
     public static String fetch(String path) throws Exception {
         Exception error = null;
-        for (String item : BASE_URLS) {
+        for (Source item : SOURCES) {
             try {
-                String result = OkHttp.string(item + path).trim();
+                String result = OkHttp.string(item.jsonBase + path).trim();
                 if (isValid(result)) {
-                    base = item;
+                    source = item;
                     return result;
                 }
             } catch (Exception e) {
@@ -39,10 +44,21 @@ public class Github {
     }
 
     public static String getApk(String name) {
-        return getBase() + "/apk/" + name + ".apk";
+        return source.apkBase + "/apk/" + name + ".apk";
     }
 
     private static boolean isValid(String result) {
         return !TextUtils.isEmpty(result) && !result.startsWith("[session") && !result.contains("Route error") && !result.contains("Access denied");
+    }
+
+    private static class Source {
+
+        private final String jsonBase;
+        private final String apkBase;
+
+        private Source(String jsonBase, String apkBase) {
+            this.jsonBase = jsonBase;
+            this.apkBase = apkBase;
+        }
     }
 }
